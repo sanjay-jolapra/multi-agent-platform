@@ -1,0 +1,55 @@
+version: "3.9"
+
+# Demonstrates the platform's runtime shape: the main application and every generated
+# application (here, the SampleInvoiceProcessor reference sample) each run as their own
+# container, each reachable on its own subdomain behind a shared reverse proxy. See
+# deploy/nginx/nginx.conf.sample for the subdomain-routing configuration.
+
+services:
+  mainapp:
+    build:
+      context: .
+      dockerfile: src/MultiAgentPlatform.Web/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__MainDb=Data Source=/app/App_Data/mainapp.db
+      # Secrets are injected via environment variables at deploy time, never baked into the
+      # image. Populate these in a local .env file or your orchestrator's secret store.
+      - AiProviders__OpenAi__ApiKey=
+      - AiProviders__Anthropic__ApiKey=
+    volumes:
+      - mainapp-data:/app/App_Data
+
+  sampleapp:
+    build:
+      context: samples/SampleInvoiceProcessor
+      dockerfile: Dockerfile
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - Heartbeat__MainAppBaseUrl=http://mainapp:8080
+    volumes:
+      - sampleapp-data:/app/App_Data
+      - sampleapp-incoming:/app/incoming
+      - sampleapp-outgoing:/app/outgoing
+    depends_on:
+      - mainapp
+
+  reverseproxy:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./deploy/nginx/nginx.conf.sample:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - mainapp
+      - sampleapp
+
+volumes:
+  mainapp-data:
+  sampleapp-data:
+  sampleapp-incoming:
+  sampleapp-outgoing:

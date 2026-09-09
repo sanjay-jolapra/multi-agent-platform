@@ -1,0 +1,113 @@
+# Sample nginx reverse-proxy configuration demonstrating subdomain routing for the
+# Multi-Agent Application Builder Platform. This file is meant to be mounted read-only into
+# the `reverseproxy` service in docker-compose.yml (see there). It intentionally uses two
+# static server blocks (one per app) rather than the fully dynamic wildcard pattern described
+# below, to keep this sample easy to read end to end.
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile      on;
+
+    # ---------------------------------------------------------------------------------------
+    # mainapp.example.com -> the main platform (chat wizard, dashboard, admin)
+    # ---------------------------------------------------------------------------------------
+    server {
+        listen 80;
+        server_name mainapp.example.com;
+
+        location / {
+            proxy_pass http://mainapp:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+
+    # ---------------------------------------------------------------------------------------
+    # sample-invoice-processor.example.com -> this reference generated application
+    # ---------------------------------------------------------------------------------------
+    server {
+        listen 80;
+        server_name sample-invoice-processor.example.com;
+
+        location / {
+            proxy_pass http://sampleapp:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+
+    # ---------------------------------------------------------------------------------------
+    # (a) Going dynamic in a real deployment
+    # ---------------------------------------------------------------------------------------
+    # The two static server blocks above work for a handful of apps but need an nginx edit
+    # (and reload) every time a new app is generated. A production deployment instead wants
+    # genuinely dynamic per-app subdomains with zero nginx changes per app:
+    #
+    #   1. Point a wildcard DNS record at the proxy host:
+    #        *.example.com  A  <server-ip>
+    #
+    #   2. Replace the static server_name lines above with a single regex-capturing block:
+    #
+    #        server {
+    #            listen 80;
+    #            server_name ~^(?<slug>.+)\.example\.com$;
+    #
+    #            location / {
+    #                # $slug is whatever comes before ".example.com", e.g. "sample-invoice-
+    #                # processor" or "mainapp". Each generated app's container is started
+    #                # with that same slug as its Docker Compose / Swarm / K8s service name
+    #                # (see Application:Slug in appsettings.json), so Docker's embedded DNS
+    #                # (or your platform's service-discovery layer) resolves $slug straight
+    #                # to the right container - no per-app nginx config, no reload.
+    #                proxy_pass http://$slug:8080;
+    #                proxy_set_header Host $host;
+    #                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #                proxy_set_header X-Forwarded-Proto $scheme;
+    #            }
+    #        }
+    #
+    #      Note: nginx resolves proxy_pass targets at config-load time by default, which
+    #      breaks for containers that don't exist yet at reload time. In production, pair
+    #      this with an explicit `resolver` directive pointing at Docker's DNS (127.0.0.11 in
+    #      Compose) and a `set $slug ...` + variable-based proxy_pass so nginx re-resolves the
+    #      hostname per request instead of caching it once.
+    #
+    # ---------------------------------------------------------------------------------------
+    # (b) TLS termination
+    # ---------------------------------------------------------------------------------------
+    # For the wildcard case, obtain a single wildcard certificate via a DNS-01 challenge
+    # (HTTP-01 cannot prove ownership of a wildcard):
+    #
+    #   certbot certonly --manual --preferred-challenges dns \
+    #       -d '*.example.com' -d 'example.com'
+    #
+    #   (or certbot certonly --nginx -d '*.example.com' if your DNS provider has a certbot
+    #   plugin that automates the DNS-01 TXT record for you)
+    #
+    # Then add to each server block (or to a shared `listen 443 ssl;` block covering all of
+    # them, since it's one wildcard cert):
+    #
+    #   listen 443 ssl;
+    #   ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+    #   ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+    #
+    # and keep a `listen 80;` block that 301-redirects to https:// for plain HTTP requests.
+    #
+    # ---------------------------------------------------------------------------------------
+    # (c) Local development alternative (spec section 4.5)
+    # ---------------------------------------------------------------------------------------
+    # None of the above is needed for local development. Each generated app already listens
+    # on its own port (see docker-compose.yml: mainapp on 5000, sampleapp on 5001) and Kestrel
+    # can serve HTTPS directly via the ASP.NET Core dev certificate
+    # (`dotnet dev-certs https --trust`), so `https://localhost:5000` / `https://localhost:5001`
+    # work with no reverse proxy at all. Reach for this reverse proxy only when you need real
+    # subdomain-based routing - locally testing the *shape* of production, or a real multi-app
+    # deployment - not for day-to-day single-app development.
+}

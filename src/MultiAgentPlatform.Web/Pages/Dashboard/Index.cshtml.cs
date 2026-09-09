@@ -18,15 +18,15 @@ public class IndexModel : PageModel
         _db = db;
     }
 
-    [BindProperty(SupportsGet = true)]
     public DashboardFilterDto Filter { get; set; } = new(null, null, null, null, null, null, null);
 
     public DashboardMetricsDto Metrics { get; set; } = null!;
 
     public List<ApplicationListItemDto> Applications { get; set; } = new();
 
-    public async Task OnGetAsync()
+    public async Task OnGetAsync(DashboardFilterDto filter)
     {
+        Filter = filter;
         var appsQuery = _db.GeneratedApplications.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(Filter.UserId))

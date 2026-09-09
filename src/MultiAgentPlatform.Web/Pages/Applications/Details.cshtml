@@ -1,0 +1,146 @@
+@page "{id:guid}"
+@model MultiAgentPlatform.Web.Pages.Applications.DetailsModel
+@{
+    ViewData["Title"] = Model.Application.Name;
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 class="mb-1">@Model.Application.Name</h2>
+        <div class="text-muted">@Model.Application.Description</div>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-info text-dark">@Model.Application.Status</span>
+        <span class="badge bg-secondary">@Model.Application.HealthState</span>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" id="detailsTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview" type="button">Overview</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#agents" type="button">Agents</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#connectors" type="button">Connectors</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#health" type="button">Health History</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#executions" type="button">Execution History</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#deployments" type="button">Deployment Log</button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="overview">
+        <table class="table w-auto">
+            <tr><th>Slug</th><td><code>@Model.Application.Slug</code></td></tr>
+            <tr><th>Owner</th><td>@Model.Application.OwnerUserId</td></tr>
+            <tr><th>Version</th><td>@Model.Application.Version</td></tr>
+            <tr><th>AI provider</th><td>@Model.Application.AiProviderKind</td></tr>
+            <tr><th>Deployment port</th><td>@(Model.Application.DeploymentPort?.ToString() ?? "not assigned")</td></tr>
+            <tr><th>Created</th><td>@Model.Application.CreatedAt.ToString("u")</td></tr>
+            <tr><th>Last heartbeat</th><td>@(Model.Application.LastHeartbeatAt?.ToString("u") ?? "never")</td></tr>
+        </table>
+    </div>
+
+    <div class="tab-pane fade" id="agents">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>#</th><th>Name</th><th>Role</th><th>Enabled</th><th>Last status</th></tr></thead>
+                <tbody>
+                    @foreach (var agent in Model.Agents)
+                    {
+                        <tr>
+                            <td>@agent.ExecutionOrder</td>
+                            <td>@agent.Name</td>
+                            <td>@agent.Role</td>
+                            <td>@(agent.IsEnabled ? "Yes" : "No")</td>
+                            <td>@agent.LastExecutionStatus</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="connectors">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Enabled</th></tr></thead>
+                <tbody>
+                    @foreach (var c in Model.Connectors)
+                    {
+                        <tr>
+                            <td>@c.Name</td>
+                            <td>@c.Type</td>
+                            <td>@c.Direction</td>
+                            <td>@(c.IsEnabled ? "Yes" : "No")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="health">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Timestamp</th><th>State</th><th>Latency (ms)</th><th>Error rate</th></tr></thead>
+                <tbody>
+                    @foreach (var h in Model.HealthHistory)
+                    {
+                        <tr>
+                            <td>@h.Timestamp.ToString("u")</td>
+                            <td>@h.State</td>
+                            <td>@h.LatencyMs</td>
+                            <td>@h.ErrorRate</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="executions">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Started</th><th>Completed</th><th>Status</th><th>Error</th></tr></thead>
+                <tbody>
+                    @foreach (var l in Model.ExecutionHistory)
+                    {
+                        <tr>
+                            <td>@l.StartedAt.ToString("u")</td>
+                            <td>@(l.CompletedAt?.ToString("u") ?? "-")</td>
+                            <td>@l.Status</td>
+                            <td>@l.ErrorMessage</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="deployments">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Timestamp</th><th>Action</th><th>Details</th></tr></thead>
+                <tbody>
+                    @foreach (var d in Model.DeploymentHistory)
+                    {
+                        <tr>
+                            <td>@d.Timestamp.ToString("u")</td>
+                            <td>@d.Action</td>
+                            <td>@d.Details</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
