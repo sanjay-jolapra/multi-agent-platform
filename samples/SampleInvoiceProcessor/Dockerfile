@@ -4,7 +4,7 @@
 # the main platform (see SampleInvoiceProcessor.csproj comments) - the project is fully
 # self-contained, so it only needs its own directory as build context.
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 COPY SampleInvoiceProcessor.csproj .
@@ -13,7 +13,7 @@ RUN dotnet restore SampleInvoiceProcessor.csproj
 COPY . .
 RUN dotnet publish SampleInvoiceProcessor.csproj -c Release -o /app --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 
 COPY --from=build /app .

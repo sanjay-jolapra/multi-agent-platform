@@ -37,9 +37,12 @@ pipeline), **Options pattern** (`AiProvidersOptions`, `HealthMonitoringOptions`,
 
 ## Running in Visual Studio 2022
 
+Targets **.NET 9.0**. Requires Visual Studio 2022 17.12+ (or the .NET 9 SDK on the CLI) — VS
+will prompt to install the .NET 9 SDK/workload on first open if it isn't present.
+
 1. Open `MultiAgentPlatform.sln`.
 2. Restore NuGet packages (VS does this automatically on load; all package versions are pinned
-   to stable 8.0.x releases — no preview/deprecated packages are used).
+   to stable 9.0.x releases — no preview/deprecated packages are used).
 3. **No EF Core migrations are checked in** (this environment had no `dotnet` SDK available to
    run `dotnet ef migrations add`, so none could be generated). `Program.cs` handles this by
    calling `Database.Migrate()` and falling back to `Database.EnsureCreated()` when no
