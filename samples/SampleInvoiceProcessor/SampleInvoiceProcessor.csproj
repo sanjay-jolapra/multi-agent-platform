@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SampleInvoiceProcessor</RootNamespace>
+    <UserSecretsId>sample-invoice-processor</UserSecretsId>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" />
+  </ItemGroup>
+
+  <!--
+    Intentionally standalone: this sample app has NO ProjectReference to
+    MultiAgentPlatform.Domain (or any other layer of the main platform). It defines its own
+    minimal IPipelineAgent abstraction locally (see Agents/IPipelineAgent.cs). This is exactly
+    what a real "generated application" produced by the platform looks like at runtime: it may
+    be scaffolded FROM the platform, but once generated it runs as a fully independent process
+    with its own database, its own agents, and only an optional outbound heartbeat back to the
+    main app. See the top-level report for the reasoning.
+  -->
+
+</Project>

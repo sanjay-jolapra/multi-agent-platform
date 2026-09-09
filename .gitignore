@@ -1,0 +1,19 @@
+## .NET
+bin/
+obj/
+*.user
+.vs/
+
+## SQLite databases / generated app runtime data
+**/App_Data/*.db
+**/App_Data/*.db-*
+*.db
+*.db-shm
+*.db-wal
+Logs/
+samples/SampleInvoiceProcessor/incoming/
+samples/SampleInvoiceProcessor/outgoing/
+
+## OS / editor
+.DS_Store
+*.swp
