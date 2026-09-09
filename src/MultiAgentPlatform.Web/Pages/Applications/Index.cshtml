@@ -1,0 +1,45 @@
+@page
+@model MultiAgentPlatform.Web.Pages.Applications.IndexModel
+@{
+    ViewData["Title"] = "Applications";
+}
+<h2 class="mb-4">Your applications</h2>
+
+@if (Model.Applications.Count == 0)
+{
+    <div class="alert alert-info">
+        You haven't generated any applications yet. <a asp-page="/Chat/Index">Start a chat</a> to build one.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Status</th>
+                    <th>Health</th>
+                    <th>Version</th>
+                    <th>Created</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var app in Model.Applications)
+                {
+                    <tr>
+                        <td>@app.Name</td>
+                        <td><code>@app.Slug</code></td>
+                        <td><span class="badge bg-info text-dark">@app.Status</span></td>
+                        <td><span class="badge bg-secondary">@app.HealthState</span></td>
+                        <td>@app.Version</td>
+                        <td>@app.CreatedAt.ToString("u")</td>
+                        <td><a class="btn btn-sm btn-outline-primary" asp-page="/Applications/Details" asp-route-id="@app.Id">Details</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
